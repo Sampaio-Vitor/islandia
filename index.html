@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapa — Maritor + Danilets Iceland Roadtrip</title>
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+
+    #map { width: 100%; height: 100%; }
+
+    /* ── Tab bar (Apple glass) ── */
+    .tabs {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      max-width: calc(100% - 28px);
+      background: rgba(18, 18, 18, 0.58);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border: 0.5px solid rgba(255,255,255,0.10);
+      border-radius: 14px;
+      padding: 5px 6px;
+      gap: 2px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25), 0 0 0 0.5px rgba(0,0,0,0.1);
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+
+    .tab-indicator {
+      position: absolute;
+      top: 7px; left: 0;
+      height: calc(100% - 14px);
+      background: rgba(255,255,255,0.10);
+      border: 0.5px solid rgba(255,255,255,0.14);
+      border-radius: 9px;
+      transition: transform 0.38s cubic-bezier(0.25, 0.1, 0.25, 1),
+                  width 0.32s cubic-bezier(0.25, 0.1, 0.25, 1);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .tab {
+      position: relative;
+      z-index: 1;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 15px;
+      color: rgba(255,255,255,0.45);
+      cursor: pointer;
+      font-size: 13px;
+      border-radius: 9px;
+      transition: color 0.25s;
+      white-space: nowrap;
+      user-select: none;
+    }
+    .tab:hover { color: rgba(255,255,255,0.8); }
+    .tab.active { color: #fff; }
+
+    .tab-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      opacity: 0.7;
+      transition: opacity 0.25s;
+    }
+    .tab.active .tab-dot { opacity: 1; }
+
+    .tab-date { font-weight: 600; font-size: 13px; letter-spacing: -0.01em; }
+    .tab-label { font-weight: 400; font-size: 12px; opacity: 0.55; }
+
+    /* ── Brand badge (top-left) ── */
+    .brand-badge {
+      position: absolute;
+      top: 14px; left: 14px;
+      z-index: 1000;
+      display: flex; align-items: center; gap: 12px;
+      background: rgba(12, 12, 12, 0.82);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border: 0.5px solid rgba(255,255,255,0.12);
+      border-radius: 14px;
+      padding: 8px 16px 8px 8px;
+      pointer-events: none;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .brand-badge img {
+      width: 44px; height: 44px; border-radius: 50%;
+      border: 1.5px solid rgba(255,255,255,0.18);
+      box-shadow: 0 0 16px rgba(100,200,160,0.15);
+    }
+    .brand-badge .brand-text { display: flex; flex-direction: column; }
+    .brand-badge .brand-name {
+      font-size: 13px; font-weight: 700; color: #fff;
+      letter-spacing: -0.01em;
+    }
+    .brand-badge .brand-sub {
+      font-size: 11px; color: rgba(255,255,255,0.4);
+      font-weight: 500;
+    }
+
+    /* ── Info card ── */
+    .info-card {
+      position: absolute;
+      bottom: 76px; left: 20px;
+      z-index: 1000;
+      background: rgba(12, 12, 12, 0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: #fff;
+      padding: 16px 20px;
+      border-radius: 12px;
+      max-width: 300px;
+      font-size: 13px;
+      line-height: 1.5;
+      pointer-events: none;
+    }
+    .info-card h2 { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+    .info-card .sub { color: rgba(255,255,255,0.5); font-size: 12px; }
+
+    /* ── Toggle button ── */
+    .toggle-btn {
+      position: absolute;
+      bottom: 76px; right: 16px;
+      z-index: 1000;
+      background: rgba(12, 12, 12, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: rgba(255,255,255,0.6);
+      border: 1.5px solid rgba(255,255,255,0.15);
+      padding: 9px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .toggle-btn:hover { color: rgba(255,255,255,0.9); border-color: rgba(255,255,255,0.3); }
+    .toggle-btn.active {
+      color: #fff;
+      background: rgba(30, 30, 30, 0.95);
+      border-color: rgba(255,255,255,0.4);
+    }
+    .toggle-btn svg { flex-shrink: 0; }
+
+    /* ── Leaflet popup ── */
+    .leaflet-popup-content-wrapper {
+      border-radius: 12px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+      overflow: hidden;
+      padding: 0;
+    }
+    .leaflet-popup-content {
+      margin: 0 !important;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.45;
+    }
+    .leaflet-popup-tip { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+    /* Stop popup card */
+    .popup-card { min-width: 270px; }
+    .popup-card img {
+      width: 100%;
+      height: 170px;
+      object-fit: cover;
+      display: block;
+    }
+    .popup-card .popup-body { padding: 14px 16px 16px; }
+    .popup-card .popup-name { font-size: 16px; font-weight: 700; color: #111; margin-bottom: 3px; }
+    .popup-card .popup-time {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+    .popup-card .popup-stay {
+      display: inline-block;
+      font-size: 11px;
+      color: #888;
+      margin-left: 6px;
+    }
+    .popup-card .popup-desc {
+      font-size: 13px;
+      color: #555;
+      line-height: 1.5;
+    }
+
+    /* Segment popup */
+    .popup-seg { padding: 14px 16px; min-width: 180px; }
+    .popup-seg .popup-route { font-size: 13px; color: #555; margin-bottom: 2px; }
+    .popup-seg .popup-route-meta { font-size: 22px; font-weight: 700; color: #111; }
+    .popup-seg .popup-route-sub { font-size: 12px; color: #999; margin-top: 2px; }
+
+    /* ── Markers ── */
+    .marker-icon {
+      display: flex; align-items: center; justify-content: center;
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      color: #fff; font-size: 11px; font-weight: 700;
+      border: 2.5px solid #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      transition: opacity 0.3s;
+    }
+    .marker-overnight {
+      display: flex; align-items: center; justify-content: center;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border: 2.5px solid #fff;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+      transition: opacity 0.3s;
+    }
+
+    /* ── Bottom nav ── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      background: rgba(18, 18, 18, 0.62);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border: 0.5px solid rgba(255,255,255,0.10);
+      border-radius: 14px;
+      padding: 5px 6px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 10px 20px;
+      color: rgba(255,255,255,0.4);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 10px;
+      transition: color 0.2s;
+    }
+    .nav-item:hover { color: rgba(255,255,255,0.7); }
+    .nav-item.active { color: #fff; background: rgba(255,255,255,0.10); }
+    .nav-item svg { flex-shrink: 0; }
+    .nav-logo {
+      width: 30px; height: 30px; border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.15);
+      margin: 0 4px;
+    }
+
+    /* ── Duration labels ── */
+    .duration-label {
+      background: rgba(0,0,0,0.72);
+      color: #fff;
+      padding: 3px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      white-space: nowrap;
+      text-align: center;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="brand-badge">
+  <img src="logo.png" alt="Logo">
+  <div class="brand-text">
+    <span class="brand-name">Maritor + Danilets</span>
+    <span class="brand-sub">Iceland Roadtrip 2026</span>
+  </div>
+</div>
+<div class="tabs" id="tabs"></div>
+<div id="map"></div>
+<div class="info-card" id="info-card"></div>
+<button class="toggle-btn" id="toggleBtn" onclick="toggleDurationMode()">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+  Tempo de direção
+</button>
+
+<nav class="bottom-nav">
+  <a href="index.html" class="nav-item active">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+    Mapa
+  </a>
+  <img src="logo.png" class="nav-logo" alt="">
+  <a href="custos.html" class="nav-item">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    Custos
+  </a>
+</nav>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ════════════════════════════════════════
+//  DATA
+// ════════════════════════════════════════
+const DAYS = [
+  {
+    date: '01 ago', label: 'Chegada', title: 'Chegada na Islândia',
+    sleep: 'Reykjavík', color: '#c0392b',
+    stops: [
+      { name: 'Aeroporto KEF', lat: 63.985, lng: -22.624, time: '18:20', stay: '1h',
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Keflavik_Airport_waiting_room.JPG/960px-Keflavik_Airport_waiting_room.JPG',
+        desc: 'Aeroporto internacional de Keflavík, principal porta de entrada da Islândia. Localizado na península de Reykjanes, a 45 minutos da capital.' },
+      { name: 'Reykjavík', lat: 64.146, lng: -21.942, time: '20:05', stay: 'Noite', overnight: true,
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Reykjav%C3%ADk%2C_view_from_Hallgr%C3%ADmskirkja_%282%29.jpg/640px-Reykjav%C3%ADk%2C_view_from_Hallgr%C3%ADmskirkja_%282%29.jpg',
+        desc: 'Capital mais setentrional do mundo, com a icônica Hallgrímskirkja dominando o horizonte. Centro vibrante de cultura, restaurantes e vida noturna nórdica.' },
+    ]
+  },
+  {
+    date: '02 ago', label: 'Snæfellsnes', title: 'Snæfellsnes → Akureyri',
+    sleep: 'Akureyri', color: '#d35400',
+    departFrom: { lat: 64.146, lng: -21.942 }, departName: 'Reykjavík',
+    stops: [
+      { name: 'Ytri Tunga', lat: 64.771, lng: -23.435, time: '08:30', stay: '30min',
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/Harbor_seals%2C_Ytri_Tunga_Beach%2C_Iceland%2C_20240714_1217_0991.jpg/960px-Harbor_seals%2C_Ytri_Tunga_Beach%2C_Iceland%2C_20240714_1217_0991.jpg',
+        desc: 'Praia dourada na costa sul de Snæfellsnes, famosa pela colônia de focas que descansam nas rochas a poucos metros dos visitantes.' },
+      { name: 'Arnarstapi', lat: 64.766, lng: -23.625, time: '09:35', stay: '1h',
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Arnarstapi_2024_%280754%29.jpg/640px-Arnarstapi_2024_%280754%29.jpg',
+        desc: 'Vila costeira com falésias dramáticas esculpidas pelo Atlântico e arcos naturais de basalto. Trilha cênica de 2,5 km até a vizinha Hellnar.' },
+      { name: 'Djúpalónssandur', lat: 64.746, lng: -23.906, time: '12:00', stay: '45min',
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Sn%C3%A6fellsj%C3%B6kull_in_the_Morning_%287622876302%29_%28cropped%29.jpg/640px-Sn%C3%A6fellsj%C3%B6kull_in_the_Morning_%287622876302%29_%28cropped%29.jpg',
+        desc: 'Praia de seixos negros aos pés do glaciar Snæfellsjökull, com restos de um naufrágio britânico e as lendárias pedras de força dos pescadores.' },
+      { name: 'Kirkjufell', lat: 64.940, lng: -23.307, time: '13:35', stay: '45min',
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Kirkjufell_in_Iceland.jpg/640px-Kirkjufell_in_Iceland.jpg',
+        desc: 'A montanha mais fotografada da Islândia, com formato cônico perfeito e a cascata Kirkjufellsfoss em primeiro plano. Cenário icônico de Game of Thrones.' },
+      { name: 'Akureyri', lat: 65.683, lng: -18.091, time: '19:05', stay: 'Noite', overnight: true,
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Akureyri_-_Skapti_Hallgr%C3%ADmsson.jpg/640px-Akureyri_-_Skapti_Hallgr%C3%ADmsson.jpg',
+        desc: '"Capital do Norte" — cidade charmosa às margens do fiorde Eyjafjörður. Jardim botânico, igrejas e excelentes restaurantes.' },
+    ]
+  },
+  {
+    date: '03 ago', label: 'Mývatn', title: 'Goðafoss → Mývatn → Dettifoss',
+    sleep: 'Egilsstaðir', color: '#f39c12',
+    departFrom: { lat: 65.683, lng: -18.091 }, departName: 'Akureyri',
+    stops: [
+      { name: 'Goðafoss', lat: 65.683, lng: -17.550, time: '08:15', stay: '45min',
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/1_Go%C3%B0afoss_aerial_pano_2017.jpg/640px-1_Go%C3%B0afoss_aerial_pano_2017.jpg',
+        desc: '"Cachoeira dos Deuses" — segundo a saga, ídolos nórdicos foram lançados aqui quando a Islândia adotou o cristianismo no ano 1000.' },
+      { name: 'Mývatn Nature Bath', lat: 65.630, lng: -16.845, time: '10:15', stay: '2h',
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/M%C3%BDvatn-pjt.jpg/640px-M%C3%BDvatn-pjt.jpg',
+        desc: 'Lagoa geotermal azul-leitosa em meio a paisagens vulcânicas. Alternativa mais tranquila e autêntica à famosa Blue Lagoon.' },
+      { name: 'Dimmuborgir', lat: 65.591, lng: -16.912, time: '13:50', stay: '1h',
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Dimmuborgir-st%C3%ADgur.jpg/640px-Dimmuborgir-st%C3%ADgur.jpg',
+        desc: 'Labirinto de formações de lava escura que lembram ruínas de uma fortaleza. Na mitologia islandesa, lar dos 13 trolls do Natal (Yule Lads).' },
+      { name: 'Skútustaðagígar', lat: 65.560, lng: -16.978, time: '15:05', stay: '45min',
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/2008-05-21_13_16_18_Iceland-Sk%C3%BAtusta%C3%B0ir.jpg/960px-2008-05-21_13_16_18_Iceland-Sk%C3%BAtusta%C3%B0ir.jpg',
+        desc: 'Pseudocrateras formadas há 2.300 anos quando lava escorreu sobre o lago Mývatn, criando explosões de vapor e cones verdes únicos.' },
+      { name: 'Hverir', lat: 65.641, lng: -16.807, time: '16:10', stay: '30min',
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Hverar%C3%B6nd_geothermal_area%2C_Iceland%2C_20240716_1047_1230.jpg/960px-Hverar%C3%B6nd_geothermal_area%2C_Iceland%2C_20240716_1047_1230.jpg',
+        desc: 'Campo geotermal surreal com fumarolas sulfurosas, lama borbulhante e solo em tons de laranja e cinza — parece outro planeta.' },
+      { name: 'Dettifoss', lat: 65.815, lng: -16.385, time: '17:40', stay: '1h',
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Dettifoss_TimBekaert.JPG/640px-Dettifoss_TimBekaert.JPG',
+        desc: 'A cachoeira mais poderosa da Europa, com 500 m³/s de água glaciar despencando num cânion de 100 m. Cenário do filme Prometheus.' },
+      { name: 'Rjúkandi', lat: 65.080, lng: -14.700, time: '20:10', stay: '15min',
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Rjukandafoss2014.JPG/960px-Rjukandafoss2014.JPG',
+        desc: 'Cascata elegante visível da Ring Road no leste da Islândia, caindo em múltiplos degraus pela encosta verde da montanha.' },
+      { name: 'Egilsstaðir', lat: 65.266, lng: -14.395, time: '21:00', stay: 'Noite', overnight: true,
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Lagarflj%C3%B3t_Egilssta%C3%B0ir_Panorama_01.jpg/960px-Lagarflj%C3%B3t_Egilssta%C3%B0ir_Panorama_01.jpg',
+        desc: 'Principal cidade do leste islandês, às margens do lago Lagarfljót — que segundo a lenda abriga uma serpente monstro.' },
+    ]
+  },
+  {
+    date: '04 ago', label: 'Leste', title: 'Puffins → Vök Baths → Höfn',
+    sleep: 'Höfn', color: '#27ae60',
+    departFrom: { lat: 65.266, lng: -14.395 }, departName: 'Egilsstaðir',
+    stops: [
+      { name: 'Borgarfjarðarhöfn', lat: 65.449, lng: -13.809, time: '08:45', stay: '1h',
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Borgarfj%C3%B6r%C3%B0ur_eystri_2023_A.jpg/640px-Borgarfj%C3%B6r%C3%B0ur_eystri_2023_A.jpg',
+        desc: 'Plataforma de observação a poucos metros de milhares de puffins (papagaios-do-mar) que nidificam nas falésias de maio a agosto.' },
+      { name: 'Vök Baths', lat: 65.265, lng: -14.340, time: '11:15', stay: '2h',
+        img: null,
+        desc: 'Banhos geotermais flutuantes no lago Urriðavatn. Piscinas de água quente natural cercadas pela paisagem serena do leste islandês.' },
+      { name: 'Djúpivogur', lat: 64.651, lng: -14.263, time: '16:30', stay: '30min',
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/1_aerial_pano_Dj%C3%BApivogur_2017.jpg/640px-1_aerial_pano_Dj%C3%BApivogur_2017.jpg',
+        desc: 'Vilarejo pitoresco com o porto de esculturas Eggin í Gleðivík — 34 ovos gigantes de granito homenageando as aves nativas.' },
+      { name: 'Höfn', lat: 64.254, lng: -15.208, time: '18:35', stay: 'Noite', overnight: true,
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Islandia%2C_H%C3%B6fn_%281981%29_01.jpg/709px-Islandia%2C_H%C3%B6fn_%281981%29_01.jpg',
+        desc: 'Vila costeira famosa pela lagosta (langoustine), com vista privilegiada para o Vatnajökull — maior glaciar da Europa.' },
+    ]
+  },
+  {
+    date: '05 ago', label: 'Glaciar', title: 'Vestrahorn → Jökulsárlón → Glaciar',
+    sleep: 'Vík', color: '#2980b9',
+    departFrom: { lat: 64.254, lng: -15.208 }, departName: 'Höfn',
+    stops: [
+      { name: 'Vestrahorn / Stokksnes', lat: 64.242, lng: -14.969, time: '07:45', stay: '45min',
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Vestrahorn_and_Stokksnes_beach_in_Iceland.jpg/640px-Vestrahorn_and_Stokksnes_beach_in_Iceland.jpg',
+        desc: 'Montanha dramática de 454 m refletida em dunas de areia negra. Um dos cenários mais fotogênicos de toda a Islândia.' },
+      { name: 'Jökulsárlón', lat: 64.048, lng: -16.178, time: '09:30', stay: '45min',
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/J%C3%B6kuls%C3%A1rl%C3%B3n_lagoon_in_southeastern_Iceland.jpg/640px-J%C3%B6kuls%C3%A1rl%C3%B3n_lagoon_in_southeastern_Iceland.jpg',
+        desc: 'Lagoa glaciar repleta de icebergs azuis desprendidos do Vatnajökull, flutuando lentamente em direção ao oceano Atlântico.' },
+      { name: 'Diamond Beach', lat: 64.044, lng: -16.175, time: '10:20', stay: '30min',
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/Brei%C3%B0amerkursandur_2024_0619.jpg/640px-Brei%C3%B0amerkursandur_2024_0619.jpg',
+        desc: 'Praia de areia negra onde os icebergs de Jökulsárlón encalham e brilham como diamantes cristalinos contra o basalto escuro.' },
+      { name: 'Fjallsárlón', lat: 64.015, lng: -16.378, time: '13:30', stay: '4h30',
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Fjalls%C3%A1rl%C3%B3n_Iceland_2016_06.jpg/640px-Fjalls%C3%A1rl%C3%B3n_Iceland_2016_06.jpg',
+        desc: 'Lagoa glaciar mais intimista que Jökulsárlón. Ponto de partida para o passeio de 4 horas sobre o glaciar com crampons e guia.' },
+      { name: 'Fjaðrárgljúfur', lat: 63.771, lng: -18.172, time: '20:00', stay: '30min',
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Iceland_2008-05-27_%282684049831%29.jpg/640px-Iceland_2008-05-27_%282684049831%29.jpg',
+        desc: 'Cânion de 100 m de profundidade e 2 km de extensão, esculpido por rios glaciares há 9.000 anos. Trilha panorâmica na borda.' },
+      { name: 'Vík', lat: 63.419, lng: -19.006, time: '22:00', stay: 'Noite', overnight: true,
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/V%C3%ADk_%C3%AD_M%C3%BDrdal%2C_Iceland.jpg/640px-V%C3%ADk_%C3%AD_M%C3%BDrdal%2C_Iceland.jpg',
+        desc: 'Vila mais meridional da Islândia, com a praia de areia negra Reynisfjara e os pináculos de Reynisdrangar emergindo do mar.' },
+    ]
+  },
+  {
+    date: '06 ago', label: 'Golden Circle', title: 'Cachoeiras → Golden Circle',
+    sleep: 'Reykjavík', color: '#8e44ad',
+    departFrom: { lat: 63.419, lng: -19.006 }, departName: 'Vík',
+    stops: [
+      { name: 'Dyrhólaey', lat: 63.401, lng: -19.127, time: '08:00', stay: '30min',
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Dyrh%C3%B3laey%2C_Su%C3%B0urland%2C_Islandia%2C_2014-08-17%2C_DD_140.jpg/640px-Dyrh%C3%B3laey%2C_Su%C3%B0urland%2C_Islandia%2C_2014-08-17%2C_DD_140.jpg',
+        desc: 'Promontório com arco natural de rocha sobre o mar e mirante de 120 m com vista 360° da costa sul. Colônia de puffins no verão.' },
+      { name: 'Skógafoss', lat: 63.532, lng: -19.511, time: '09:00', stay: '45min',
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/2008-05-24_35_Sk%C3%B3gafoss.jpg/640px-2008-05-24_35_Sk%C3%B3gafoss.jpg',
+        desc: 'Cachoeira de 60 m perfeitamente retangular com arco-íris frequente. Escadaria lateral leva ao topo e à trilha Fimmvörðuháls.' },
+      { name: 'Seljalandsfoss', lat: 63.616, lng: -19.989, time: '10:15', stay: '45min',
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Idyllic_landscape_with_a_waterfall_%28Unsplash%29.jpg/640px-Idyllic_landscape_with_a_waterfall_%28Unsplash%29.jpg',
+        desc: 'Cachoeira de 65 m que permite caminhar por trás da cortina d\'água — experiência única na Islândia, especialmente ao pôr do sol.' },
+      { name: 'Friðheimar', lat: 64.014, lng: -20.534, time: '13:00', stay: '1h',
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/Fridheimar_Tomatoes.jpg/960px-Fridheimar_Tomatoes.jpg',
+        desc: 'Estufa familiar onde tomates crescem o ano todo com energia geotermal. Famosa pela sopa de tomate ilimitada e pão caseiro.' },
+      { name: 'Geysir', lat: 64.310, lng: -20.302, time: '14:15', stay: '30min',
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/Erupting_geysir.jpg/640px-Erupting_geysir.jpg',
+        desc: 'Área geotermal que deu nome a todos os gêiseres do mundo. Strokkur entra em erupção a cada 5–10 minutos, até 30 m de altura.' },
+      { name: 'Gullfoss', lat: 64.327, lng: -20.122, time: '15:00', stay: '45min',
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Gullfoss_from_the_Air_%28cropped%29.jpg/640px-Gullfoss_from_the_Air_%28cropped%29.jpg',
+        desc: '"Cachoeira Dourada" — queda dupla no rio Hvítá que despenca num cânion profundo. Spray constante cria arco-íris em dias de sol.' },
+      { name: 'Kerið', lat: 64.041, lng: -20.885, time: '16:30', stay: '30min',
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/A_girl_standing_on_top_of_Keri%C3%B0.jpg/640px-A_girl_standing_on_top_of_Keri%C3%B0.jpg',
+        desc: 'Cratera vulcânica de 3.000 anos com lago azul-turquesa, cercada por paredes avermelhadas — um anfiteatro natural.' },
+      { name: 'Reykjavík', lat: 64.146, lng: -21.942, time: '18:30', stay: 'Noite', overnight: true,
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Reykjav%C3%ADk%2C_view_from_Hallgr%C3%ADmskirkja_%282%29.jpg/640px-Reykjav%C3%ADk%2C_view_from_Hallgr%C3%ADmskirkja_%282%29.jpg',
+        desc: 'De volta à capital para a última noite antes do dia livre. Aproveite a Laugavegur e os restaurantes do centro.' },
+    ]
+  },
+  {
+    date: '07 ago', label: 'Silfra', title: 'Silfra + Reykjavík',
+    sleep: 'Reykjavík', color: '#16a085',
+    departFrom: { lat: 64.146, lng: -21.942 }, departName: 'Reykjavík',
+    stops: [
+      { name: 'Silfra', lat: 64.256, lng: -21.116, time: '09:00', stay: '3h',
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Ca%C3%B1%C3%B3n_Silfra%2C_Parque_Nacional_de_%C3%9Eingvellir%2C_Su%C3%B0urland%2C_Islandia%2C_2014-08-16%2C_DD_056.JPG/640px-Ca%C3%B1%C3%B3n_Silfra%2C_Parque_Nacional_de_%C3%9Eingvellir%2C_Su%C3%B0urland%2C_Islandia%2C_2014-08-16%2C_DD_056.JPG',
+        desc: 'Fissura entre as placas tectônicas da América do Norte e da Eurásia. Água cristalina com visibilidade de até 100 metros.' },
+      { name: 'Reykjavík / Sky Lagoon', lat: 64.124, lng: -21.950, time: '13:00', stay: 'Tarde', overnight: true,
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Sky_Lagoon_Exterior.jpg/640px-Sky_Lagoon_Exterior.jpg',
+        desc: 'Lagoa geotermal à beira do oceano com piscina infinita voltada para o Atlântico Norte e ritual de 7 passos para relaxamento.' },
+    ]
+  },
+];
+
+// ════════════════════════════════════════
+//  MAP
+// ════════════════════════════════════════
+const ICELAND_BOUNDS = [[62.8, -25.5], [67.0, -12.5]];
+
+const map = L.map('map', {
+  zoomControl: false,
+  attributionControl: false,
+  maxBounds: ICELAND_BOUNDS,
+  maxBoundsViscosity: 1.0,
+  minZoom: 6,
+  maxZoom: 15,
+}).setView([64.9, -18.5], 6);
+
+L.control.zoom({ position: 'topright' }).addTo(map);
+L.control.attribution({ position: 'bottomright', prefix: false })
+  .addAttribution('&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> · <a href="https://carto.com/">CARTO</a> · OSRM')
+  .addTo(map);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  maxZoom: 15,
+  subdomains: 'abcd',
+}).addTo(map);
+
+// ════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════
+let activeDay = -1;
+let durationMode = false;
+let globalMinDur = Infinity;
+let globalMaxDur = 0;
+const dayData = [];
+
+// ════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════
+const HOUSE_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>';
+
+function stopIcon(num, color) {
+  return L.divIcon({
+    className: '',
+    iconSize: [26, 26],
+    iconAnchor: [13, 13],
+    html: `<div class="marker-icon" style="background:${color}">${num}</div>`,
+  });
+}
+
+function overnightIcon(color) {
+  return L.divIcon({
+    className: '',
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+    html: `<div class="marker-overnight" style="background:${color}">${HOUSE_SVG}</div>`,
+  });
+}
+
+function fmtDuration(sec) {
+  if (!sec) return '—';
+  const h = Math.floor(sec / 3600);
+  const m = Math.round((sec % 3600) / 60);
+  if (h > 0 && m > 0) return `${h}h ${m}min`;
+  if (h > 0) return `${h}h`;
+  return `${m}min`;
+}
+
+function fmtDistance(m) {
+  return `${Math.round(m / 1000)} km`;
+}
+
+function durColor(sec) {
+  if (globalMaxDur === globalMinDur) return '#27ae60';
+  const t = Math.min(1, Math.max(0, (sec - globalMinDur) / (globalMaxDur - globalMinDur)));
+  const r = Math.round(t < 0.5 ? t * 2 * 255 : 255);
+  const g = Math.round(t < 0.5 ? 255 : (1 - (t - 0.5) * 2) * 255);
+  return `rgb(${r},${g},0)`;
+}
+
+function stopPopupHtml(stop, color) {
+  const imgTag = stop.img
+    ? `<img src="${stop.img}" alt="${stop.name}" loading="lazy">`
+    : '';
+  return `<div class="popup-card">
+    ${imgTag}
+    <div class="popup-body">
+      <div class="popup-name">${stop.name}</div>
+      <span class="popup-time" style="background:${color}">${stop.time}</span>
+      <span class="popup-stay">${stop.stay}</span>
+      <div class="popup-desc">${stop.desc}</div>
+    </div>
+  </div>`;
+}
+
+function segPopupHtml(seg) {
+  return `<div class="popup-seg">
+    <div class="popup-route">${seg.fromName} → ${seg.toName}</div>
+    <div class="popup-route-meta">${fmtDuration(seg.duration)}</div>
+    <div class="popup-route-sub">${fmtDistance(seg.distance)}</div>
+  </div>`;
+}
+
+// ════════════════════════════════════════
+//  OSRM — per-leg routing
+// ════════════════════════════════════════
+async function fetchDayRoute(waypoints) {
+  const coords = waypoints.map(w => `${w.lng},${w.lat}`).join(';');
+  const url = `https://router.project-osrm.org/route/v1/driving/${coords}?steps=true&geometries=geojson&overview=full`;
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.code === 'Ok' && data.routes.length > 0) {
+      const route = data.routes[0];
+      return route.legs.map(leg => {
+        const pts = [];
+        leg.steps.forEach((step, si) => {
+          const sc = step.geometry.coordinates.map(c => [c[1], c[0]]);
+          if (si === 0) pts.push(...sc);
+          else pts.push(...sc.slice(1));
+        });
+        return { coords: pts, duration: leg.duration, distance: leg.distance };
+      });
+    }
+  } catch (e) {
+    console.warn('OSRM fallback:', e);
+  }
+
+  const legs = [];
+  for (let i = 0; i < waypoints.length - 1; i++) {
+    legs.push({
+      coords: [[waypoints[i].lat, waypoints[i].lng], [waypoints[i + 1].lat, waypoints[i + 1].lng]],
+      duration: 0, distance: 0,
+    });
+  }
+  return legs;
+}
+
+// ════════════════════════════════════════
+//  TABS
+// ════════════════════════════════════════
+function buildTabs() {
+  const container = document.getElementById('tabs');
+
+  // Sliding glass indicator
+  const indicator = document.createElement('div');
+  indicator.className = 'tab-indicator';
+  indicator.id = 'tabIndicator';
+  container.appendChild(indicator);
+
+  const allTab = document.createElement('div');
+  allTab.className = 'tab active';
+  allTab.innerHTML = '<span class="tab-date">Todos</span>';
+  allTab.onclick = () => setActiveDay(-1);
+  container.appendChild(allTab);
+
+  DAYS.forEach((day, i) => {
+    const tab = document.createElement('div');
+    tab.className = 'tab';
+    tab.innerHTML = `<span class="tab-dot" style="background:${day.color}"></span><span class="tab-date">${day.date}</span><span class="tab-label">${day.label}</span>`;
+    tab.onclick = () => setActiveDay(i);
+    container.appendChild(tab);
+  });
+
+  requestAnimationFrame(moveIndicator);
+}
+
+function moveIndicator() {
+  const active = document.querySelector('.tab.active');
+  const ind = document.getElementById('tabIndicator');
+  if (!active || !ind) return;
+  ind.style.width = active.offsetWidth + 'px';
+  ind.style.transform = `translateX(${active.offsetLeft}px)`;
+}
+
+// ════════════════════════════════════════
+//  INFO CARD
+// ════════════════════════════════════════
+function updateInfoCard(idx) {
+  const card = document.getElementById('info-card');
+  if (idx === -1) {
+    const totalStops = DAYS.reduce((s, d) => s + d.stops.length, 0);
+    card.innerHTML = `<h2>Islândia — Agosto 2026</h2><div class="sub">7 dias · Ring Road · ${totalStops} paradas</div>`;
+  } else {
+    const d = DAYS[idx];
+    const totalDriving = dayData[idx]?.segments.reduce((s, seg) => s + seg.duration, 0) || 0;
+    card.innerHTML = `<h2>${d.title}</h2><div class="sub">${d.stops.length} paradas · ${fmtDuration(totalDriving)} dirigindo · Dormir: ${d.sleep}</div>`;
+  }
+}
+
+// ════════════════════════════════════════
+//  RENDER
+// ════════════════════════════════════════
+function applyStyles() {
+  dayData.forEach((dd, di) => {
+    const isActive = activeDay === -1 || activeDay === di;
+
+    dd.segments.forEach(seg => {
+      const color = durationMode ? seg.durColor : seg.dayColor;
+      seg.glow.setStyle({ color, opacity: isActive ? 0.25 : 0.04 });
+      seg.line.setStyle({ color, opacity: isActive ? 0.9 : 0.12 });
+
+      if (durationMode && isActive && seg.duration > 0) {
+        seg.label.addTo(map);
+      } else {
+        seg.label.remove();
+      }
+    });
+
+    dd.markers.forEach(m => m.setOpacity(isActive ? 1 : 0.25));
+  });
+}
+
+function setActiveDay(idx) {
+  activeDay = idx;
+
+  document.querySelectorAll('.tab').forEach((tab, i) => {
+    tab.classList.toggle('active', (idx === -1 && i === 0) || (idx === i - 1));
+  });
+  moveIndicator();
+
+  // Scroll active tab into view
+  const activeTab = document.querySelector('.tab.active');
+  if (activeTab) activeTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+
+  applyStyles();
+
+  if (idx === -1) {
+    const all = DAYS.flatMap(d => d.stops.map(s => [s.lat, s.lng]));
+    map.fitBounds(L.latLngBounds(all), { padding: [80, 60], maxZoom: 7 });
+  } else {
+    const pts = DAYS[idx].stops.map(s => [s.lat, s.lng]);
+    if (DAYS[idx].departFrom) pts.unshift([DAYS[idx].departFrom.lat, DAYS[idx].departFrom.lng]);
+    map.fitBounds(L.latLngBounds(pts), { padding: [80, 60], maxZoom: 10 });
+  }
+
+  updateInfoCard(idx);
+}
+
+function toggleDurationMode() {
+  durationMode = !durationMode;
+  document.getElementById('toggleBtn').classList.toggle('active', durationMode);
+  applyStyles();
+}
+
+// ════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════
+async function init() {
+  buildTabs();
+  updateInfoCard(-1);
+
+  const waypointSets = DAYS.map(day => {
+    const pts = day.stops.map(s => ({ lat: s.lat, lng: s.lng }));
+    if (day.departFrom) pts.unshift(day.departFrom);
+    return pts;
+  });
+
+  const nameSets = DAYS.map(day => {
+    const names = day.stops.map(s => s.name);
+    if (day.departFrom) names.unshift(day.departName);
+    return names;
+  });
+
+  const allLegs = await Promise.all(waypointSets.map(fetchDayRoute));
+
+  allLegs.forEach(legs => {
+    legs.forEach(leg => {
+      if (leg.duration > 0) {
+        globalMinDur = Math.min(globalMinDur, leg.duration);
+        globalMaxDur = Math.max(globalMaxDur, leg.duration);
+      }
+    });
+  });
+
+  allLegs.forEach((legs, di) => {
+    const day = DAYS[di];
+    const names = nameSets[di];
+    const segments = [];
+
+    legs.forEach((leg, li) => {
+      const fromName = names[li];
+      const toName = names[li + 1];
+      const dc = durColor(leg.duration);
+
+      const glow = L.polyline(leg.coords, {
+        color: day.color, weight: 10, opacity: 0.25, lineCap: 'round', lineJoin: 'round',
+      }).addTo(map);
+
+      const line = L.polyline(leg.coords, {
+        color: day.color, weight: 4, opacity: 0.9, lineCap: 'round', lineJoin: 'round',
+      }).addTo(map);
+
+      const seg = {
+        glow, line, fromName, toName,
+        duration: leg.duration, distance: leg.distance,
+        dayColor: day.color, durColor: dc, coords: leg.coords,
+        label: null,
+      };
+
+      line.bindPopup(segPopupHtml(seg), { maxWidth: 220 });
+      glow.bindPopup(segPopupHtml(seg), { maxWidth: 220 });
+
+      const mid = leg.coords[Math.floor(leg.coords.length / 2)];
+      seg.label = L.marker(mid, {
+        icon: L.divIcon({
+          className: '',
+          iconSize: [70, 22],
+          iconAnchor: [35, 11],
+          html: `<div class="duration-label">${fmtDuration(leg.duration)}</div>`,
+        }),
+        interactive: false,
+        zIndexOffset: -100,
+      });
+
+      segments.push(seg);
+    });
+
+    let stopNum = 0;
+    const markers = day.stops.map(stop => {
+      let icon;
+      if (stop.overnight) {
+        icon = overnightIcon(day.color);
+      } else {
+        stopNum++;
+        icon = stopIcon(stopNum, day.color);
+      }
+      const m = L.marker([stop.lat, stop.lng], {
+        icon,
+        zIndexOffset: stop.overnight ? 200 : 100,
+      });
+      m.bindTooltip(stop.name, { direction: 'top', offset: [0, -16] });
+      m.bindPopup(stopPopupHtml(stop, day.color), { maxWidth: 300, minWidth: 270 });
+      m.addTo(map);
+      return m;
+    });
+
+    dayData[di] = { segments, markers };
+  });
+
+  setActiveDay(-1);
+}
+
+init();
+</script>
+</body>
+</html>
