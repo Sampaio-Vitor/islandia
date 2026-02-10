@@ -148,7 +148,7 @@ def main():
 
     # Day 5 — glaciar 4h
     pdf.add_day(
-        "05/08", "Vestrahorn \u2192 J\u00f6kuls\u00e1rl\u00f3n \u2192 Glaciar 14h \u2192 Vik", "Vik",
+        "05/08", "Vestrahorn \u2192 J\u00f6kuls\u00e1rl\u00f3n \u2192 Glaciar 14h \u2192 Kirkjub\u00e6jarklaustur", "Kirkjub\u00e6jarklaustur",
         [
             ["Vestrahorn / Stokksnes", "15 min", "07:45", "45 min", "Fotos + dunas negras"],
             ["J\u00f6kuls\u00e1rl\u00f3n", "1h", "09:30", "45 min", "Fotos"],
@@ -156,23 +156,23 @@ def main():
             ["Almo\u00e7o", "15 min", "11:05", "1h", "Restaurante local"],
             ["Fjalls\u00e1rl\u00f3n", "10 min", "13:30", "4h30", "Passeio no glaciar (14h-18h)"],
             ["Fja\u00f0r\u00e1rglj\u00fafur", "2h", "20:00", "30 min", "C\u00e2nion"],
-            ["Vik", "1h30", "22:00", "Noite", "Check-in e jantar"],
+            ["Kirkjub\u00e6jarklaustur", "15 min", "20:45", "Noite", "Check-in e jantar"],
         ],
         highlights={0, 4}
     )
 
     # Day 6
     pdf.add_day(
-        "06/08", "Vik \u2192 Cachoeiras \u2192 Golden Circle \u2192 Reykjav\u00edk", "Reykjav\u00edk",
+        "06/08", "Kirkjub\u00e6jarklaustur \u2192 Cachoeiras \u2192 Golden Circle \u2192 Reykjav\u00edk", "Reykjav\u00edk",
         [
-            ["Dyrh\u00f3laey", "30 min", "08:00", "30 min", "Mirante"],
-            ["Sk\u00f3gafoss", "30 min", "09:00", "45 min", "Cachoeira"],
-            ["Seljalandsfoss", "30 min", "10:15", "45 min", "Caminhar atr\u00e1s"],
-            ["Fri\u00f0heimar", "2h", "13:00", "1h", "Almo\u00e7o (estufas de tomate)"],
-            ["Geysir", "15 min", "14:15", "30 min", "\u00c1rea geotermal"],
-            ["Gullfoss", "15 min", "15:00", "45 min", "Cachoeira"],
-            ["Keri\u00f0", "45 min", "16:30", "30 min", "Cratera"],
-            ["Reykjav\u00edk", "1h30", "18:30", "Noite", "Check-in e jantar"],
+            ["Dyrh\u00f3laey", "1h15", "08:15", "30 min", "Mirante"],
+            ["Sk\u00f3gafoss", "30 min", "09:15", "45 min", "Cachoeira"],
+            ["Seljalandsfoss", "30 min", "10:30", "45 min", "Caminhar atr\u00e1s"],
+            ["Fri\u00f0heimar", "2h", "13:15", "1h", "Almo\u00e7o (estufas de tomate)"],
+            ["Geysir", "15 min", "14:30", "30 min", "\u00c1rea geotermal"],
+            ["Gullfoss", "15 min", "15:15", "45 min", "Cachoeira"],
+            ["Keri\u00f0", "45 min", "16:45", "30 min", "Cratera"],
+            ["Reykjav\u00edk", "1h30", "18:45", "Noite", "Check-in e jantar"],
         ]
     )
 
@@ -207,8 +207,8 @@ def main():
         ["02/08", "Sn\u00e6fellsnes \u2192 Akureyri", "19:05", "Akureyri"],
         ["03/08", "Go\u00f0afoss \u2192 M\u00fdvatn \u2192 Dettifoss \u2192 Borgarfj\u00f6r\u00f0ur", "21:10", "Borgarfj\u00f6r\u00f0ur eystri"],
         ["04/08", "Puffins \u2192 V\u00f6k Baths \u2192 Rj\u00fakandi \u2192 H\u00f6fn", "17:30", "H\u00f6fn"],
-        ["05/08", "Vestrahorn \u2192 J\u00f6kuls\u00e1rl\u00f3n \u2192 Glaciar 14h \u2192 Vik", "22:00", "Vik"],
-        ["06/08", "Cachoeiras \u2192 Golden Circle \u2192 Reykjav\u00edk", "18:30", "Reykjav\u00edk"],
+        ["05/08", "Vestrahorn \u2192 J\u00f6kuls\u00e1rl\u00f3n \u2192 Glaciar \u2192 Kirkjub\u00e6jarklaustur", "20:45", "Kirkjub\u00e6jarklaustur"],
+        ["06/08", "Kirkjub\u00e6jarklaustur \u2192 Cachoeiras \u2192 Golden Circle \u2192 Reykjav\u00edk", "18:45", "Reykjav\u00edk"],
         ["07/08", "Silfra + Reykjav\u00edk / Sky Lagoon", "13:00", "Reykjav\u00edk"],
     ]
 
@@ -261,7 +261,7 @@ def main():
         "Dia 03 chega mais tarde (~21h) por incluir Dettifoss. Ainda h\u00e1 sol pleno nesse hor\u00e1rio.",
         "Dia 04 \u00e9 o mais tranquilo. Aproveite o jantar em H\u00f6fn \u2014 famosa pela lagosta.",
         "Dia 05: passeio no glaciar das 14h \u00e0s 18h (4h). Chegar em Fjalls\u00e1rl\u00f3n at\u00e9 13:30 para check-in.",
-        "Dia 05 termina mais tarde (~22h) por conta do glaciar de 4h. Ainda h\u00e1 luz nesse hor\u00e1rio.",
+        "Dia 05 termina em Kirkjub\u00e6jarklaustur (~20:45), perto de Fja\u00f0r\u00e1rglj\u00fafur. Hotel Geirland.",
         "Vestrahorn/Stokksnes: pagar taxa no Viking Caf\u00e9 (~900 ISK por pessoa). Sem reserva.",
         "Clima island\u00eas \u00e9 imprevis\u00edvel. Tenha sempre plano B e roupas imperme\u00e1veis.",
         "Abaste\u00e7a o carro sempre que poss\u00edvel. Postos podem ser distantes no leste e norte.",
