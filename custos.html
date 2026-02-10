@@ -108,9 +108,9 @@
     }
     .night-row:last-child { border-bottom: none; }
     .night-date { font-size: 12px; color: rgba(255,255,255,0.35); width: 48px; flex-shrink: 0; }
-    .night-city { font-size: 13px; color: rgba(255,255,255,0.7); flex: 1; }
-    .night-price { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.85); }
-    .night-note { font-size: 11px; color: rgba(255,255,255,0.25); margin-left: 4px; }
+    .night-city { font-size: 13px; color: rgba(255,255,255,0.7); flex: 1; min-width: 0; }
+    .night-price { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.85); white-space: nowrap; flex-shrink: 0; margin-left: 8px; }
+    .night-note { font-size: 11px; color: rgba(255,255,255,0.25); display: block; }
 
     /* ── Total ── */
     .total-card {
@@ -119,7 +119,7 @@
     }
     .total-row { display: flex; justify-content: space-between; align-items: baseline; }
     .total-label { font-size: 13px; color: rgba(255,255,255,0.5); }
-    .total-value { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; }
+    .total-value { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.4; }
     .total-sub { display: flex; justify-content: space-between; margin-top: 6px; font-size: 13px; color: rgba(255,255,255,0.35); }
 
     /* ── Bottom nav ── */
@@ -214,22 +214,21 @@
       </div>
       <div class="card-info">
         <div class="card-name">7 noites</div>
-        <div class="card-detail">01/08 a 07/08 · preço do quarto</div>
+        <div class="card-detail">01/08 a 08/08 · reservado por Vitor</div>
       </div>
       <div>
-        <div class="card-amount">$3.067</div>
+        <div class="card-amount" id="stayTotal"></div>
         <div class="card-per-person" id="stayPP"></div>
       </div>
     </div>
     <div class="breakdown">
-      <div class="night-row"><span class="night-date">01/08</span><span class="night-city">Reykjavík</span><span class="night-price">$550</span></div>
-      <div class="night-row"><span class="night-date">02/08</span><span class="night-city">Akureyri</span><span class="night-price">$250</span></div>
-      <div class="night-row"><span class="night-date">03/08</span><span class="night-city">Egilsstaðir</span><span class="night-price">$450</span></div>
-      <div class="night-row"><span class="night-date">04/08</span><span class="night-city">Höfn</span><span class="night-price">$317</span></div>
-      <div class="night-row"><span class="night-date">05/08</span><span class="night-city">Vík</span><span class="night-price">$400</span></div>
-      <div class="night-row"><span class="night-date">06/08</span><span class="night-city">Reykjavík</span><span class="night-price">$550</span></div>
-      <div class="night-row"><span class="night-date">07/08</span><span class="night-city">Reykjavík</span><span class="night-price">$550</span></div>
-      <div class="breakdown-row highlight"><span>Total hospedagem</span><span>$3.067</span></div>
+      <div class="night-row"><span class="night-date">01→02</span><span class="night-city">Cabin, Borgartún 32 <span class="night-note">Reykjavík</span></span><span class="night-price">€364,16</span></div>
+      <div class="night-row"><span class="night-date">02→03</span><span class="night-city">Centrum Hostel, Hafnarstræti 102 <span class="night-note">Akureyri</span></span><span class="night-price">€340,12</span></div>
+      <div class="night-row"><span class="night-date">03→04</span><span class="night-city">Blábjörg Guesthouse <span class="night-note">Borgarfjörður eystri</span></span><span class="night-price">€309,26</span></div>
+      <div class="night-row"><span class="night-date">04→05</span><span class="night-city">Setberg Guesthouse <span class="night-note">Höfn</span></span><span class="night-price">€428,00</span></div>
+      <div class="night-row"><span class="night-date">05→06</span><span class="night-city">Geirland <span class="night-note">Kirkjubæjarklaustur</span></span><span class="night-price">€520,00</span></div>
+      <div class="night-row"><span class="night-date">06→08</span><span class="night-city">Island Comfort, Hlíðasmári 13 <span class="night-note">Kópavogur · 2 noites</span></span><span class="night-price">€705,26</span></div>
+      <div class="breakdown-row highlight"><span>Total hospedagem</span><span id="stayBreakdownTotal"></span></div>
     </div>
   </div>
 </div>
@@ -277,8 +276,8 @@
         <div class="card-detail">Fjallsárlón · 4h com guia + crampons</div>
       </div>
       <div>
-        <div class="card-amount">$250</div>
-        <div class="card-per-person">por pessoa</div>
+        <div class="card-amount" id="glacierTotal"></div>
+        <div class="card-per-person" id="glacierPP"></div>
       </div>
     </div>
   </div>
@@ -313,7 +312,7 @@
     </div>
     <div class="breakdown" style="margin-top:16px;">
       <div class="breakdown-row"><span>Transporte (carro + gasolina)</span><span id="sumTransport"></span></div>
-      <div class="breakdown-row"><span>Hospedagem (7 noites)</span><span id="sumStay"></span></div>
+      <div class="breakdown-row"><span>Hospedagem (7 noites, EUR)</span><span id="sumStay"></span></div>
       <div class="breakdown-row"><span id="sumFoodLabel"></span><span id="sumFood"></span></div>
       <div class="breakdown-row"><span id="sumActLabel"></span><span id="sumAct"></span></div>
       <div class="breakdown-row highlight"><span>Total</span><span id="sumTotal"></span></div>
@@ -327,7 +326,7 @@
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
     Mapa
   </a>
-  <img src="logo.png" class="nav-logo" alt="">
+  <a href="roteiro.html"><img src="logo.png" class="nav-logo" alt="Roteiro"></a>
   <a href="custos.html" class="nav-item active">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
     Custos
@@ -335,34 +334,42 @@
 </nav>
 
 <script>
-const FIXED = { car: 1500, gas: 370, stay: 3067 };
-const PER_PERSON = { food: 350, glacier: 250, silfra: 150 };
+const FIXED_USD = { car: 1500, gas: 370 };
+const FIXED_EUR = { stay: 2666.80 };
+const FIXED_BRL = { glacier: 5874.49 };
+const PER_PERSON_USD = { food: 350, silfra: 150 };
 const people = 4;
 
-function fmt(v) { return '$' + v.toLocaleString('pt-BR'); }
+function fmtUSD(v) { return '$' + v.toLocaleString('pt-BR'); }
+function fmtEUR(v) { return '€' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function fmtBRL(v) { return 'R$' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
 function update() {
-  const fixed = FIXED.car + FIXED.gas + FIXED.stay;
-  const pp = PER_PERSON.food + PER_PERSON.glacier + PER_PERSON.silfra;
-  const grand = fixed + pp * people;
-  const perPerson = Math.round(grand / people);
+  const transportUSD = FIXED_USD.car + FIXED_USD.gas;
+  const totalUSD = transportUSD + (PER_PERSON_USD.food + PER_PERSON_USD.silfra) * people;
 
-  document.getElementById('carPP').textContent = `${fmt(Math.round(FIXED.car / people))}/pessoa`;
-  document.getElementById('gasPP').textContent = `~${fmt(Math.round(FIXED.gas / people))}/pessoa`;
-  document.getElementById('stayPP').textContent = `${fmt(Math.round(FIXED.stay / people))}/pessoa`;
+  document.getElementById('carPP').textContent = `${fmtUSD(Math.round(FIXED_USD.car / people))}/pessoa`;
+  document.getElementById('gasPP').textContent = `~${fmtUSD(Math.round(FIXED_USD.gas / people))}/pessoa`;
 
-  document.getElementById('totalValue').textContent = fmt(grand);
-  document.getElementById('totalPerPerson').textContent = `${fmt(perPerson)} por pessoa`;
+  document.getElementById('stayTotal').textContent = fmtEUR(FIXED_EUR.stay);
+  document.getElementById('stayPP').textContent = `${fmtEUR(Math.round(FIXED_EUR.stay / people * 100) / 100)}/pessoa`;
+  document.getElementById('stayBreakdownTotal').textContent = fmtEUR(FIXED_EUR.stay);
+
+  document.getElementById('glacierTotal').textContent = fmtBRL(FIXED_BRL.glacier);
+  document.getElementById('glacierPP').textContent = `${fmtBRL(Math.round(FIXED_BRL.glacier / people * 100) / 100)}/pessoa`;
+
+  document.getElementById('totalValue').innerHTML = `${fmtUSD(totalUSD)}<span style="font-size:14px;color:rgba(255,255,255,0.35)"> + </span>${fmtEUR(FIXED_EUR.stay)}<span style="font-size:14px;color:rgba(255,255,255,0.35)"> + </span>${fmtBRL(FIXED_BRL.glacier)}`;
+  document.getElementById('totalPerPerson').innerHTML = `${fmtUSD(Math.round(totalUSD / people))} + ${fmtEUR(Math.round(FIXED_EUR.stay / people * 100) / 100)} + ${fmtBRL(Math.round(FIXED_BRL.glacier / people * 100) / 100)} /pessoa`;
   document.getElementById('totalPeople').textContent = `${people} viajante${people > 1 ? 's' : ''}`;
 
   // Summary breakdown
-  document.getElementById('sumTransport').textContent = fmt(FIXED.car + FIXED.gas);
-  document.getElementById('sumStay').textContent = fmt(FIXED.stay);
+  document.getElementById('sumTransport').textContent = fmtUSD(transportUSD);
+  document.getElementById('sumStay').textContent = fmtEUR(FIXED_EUR.stay);
   document.getElementById('sumFoodLabel').textContent = `Alimentação (${people}×$350)`;
-  document.getElementById('sumFood').textContent = fmt(PER_PERSON.food * people);
-  document.getElementById('sumActLabel').textContent = `Atividades (${people}×$400)`;
-  document.getElementById('sumAct').textContent = fmt((PER_PERSON.glacier + PER_PERSON.silfra) * people);
-  document.getElementById('sumTotal').textContent = fmt(grand);
+  document.getElementById('sumFood').textContent = fmtUSD(PER_PERSON_USD.food * people);
+  document.getElementById('sumActLabel').textContent = `Atividades`;
+  document.getElementById('sumAct').innerHTML = `${fmtBRL(FIXED_BRL.glacier)} + ${fmtUSD(PER_PERSON_USD.silfra * people)}`;
+  document.getElementById('sumTotal').innerHTML = `${fmtUSD(totalUSD)} + ${fmtEUR(FIXED_EUR.stay)} + ${fmtBRL(FIXED_BRL.glacier)}`;
 }
 
 update();
