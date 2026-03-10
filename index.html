@@ -699,6 +699,11 @@ const dayData = [];
 // ════════════════════════════════════════
 //  HELPERS
 // ════════════════════════════════════════
+function proxyImg(url) {
+  if (!url) return null;
+  return 'https://wsrv.nl/?url=' + url.replace('https://', '') + '&w=640';
+}
+
 const HOUSE_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>';
 
 function stopIcon(num, color) {
@@ -742,7 +747,7 @@ function durColor(sec) {
 
 function stopPopupHtml(stop, color) {
   const imgTag = stop.img
-    ? `<img src="${stop.img}" alt="${stop.name}" loading="lazy">`
+    ? `<img src="${proxyImg(stop.img)}" alt="${stop.name}" loading="lazy">`
     : '';
   return `<div class="popup-card">
     ${imgTag}
@@ -867,7 +872,7 @@ function updateDayPanel(idx) {
 
   day.stops.forEach((stop, si) => {
     const imgHtml = stop.img
-      ? `<img class="panel-stop-img" src="${stop.img}" alt="${stop.name}" loading="lazy">`
+      ? `<img class="panel-stop-img" data-src="${proxyImg(stop.img)}" alt="${stop.name}">`
       : `<div class="panel-stop-img-placeholder"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>`;
 
     html += `<div class="panel-stop" data-day="${idx}" data-stop="${si}">
@@ -896,6 +901,17 @@ function updateDayPanel(idx) {
   panel.offsetHeight;
   panel.classList.add('open');
   panel.scrollTop = 0;
+
+  // Lazy load panel images as they scroll into view
+  const imgObs = new IntersectionObserver((entries, obs) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.src = e.target.dataset.src;
+        obs.unobserve(e.target);
+      }
+    });
+  }, { root: panel, rootMargin: '200px' });
+  panel.querySelectorAll('img[data-src]').forEach(img => imgObs.observe(img));
 
   // Click handlers for stops
   panel.querySelectorAll('.panel-stop').forEach(el => {
