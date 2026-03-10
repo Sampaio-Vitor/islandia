@@ -495,6 +495,7 @@
 </nav>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="routes.js"></script>
 <script>
 // ════════════════════════════════════════
 //  DATA
@@ -763,39 +764,14 @@ function segPopupHtml(seg) {
 }
 
 // ════════════════════════════════════════
-//  OSRM — per-leg routing
+//  ROUTES — pre-cached OSRM data
 // ════════════════════════════════════════
-async function fetchDayRoute(waypoints) {
-  const coords = waypoints.map(w => `${w.lng},${w.lat}`).join(';');
-  const url = `https://router.project-osrm.org/route/v1/driving/${coords}?steps=true&geometries=geojson&overview=full`;
-
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
-    if (data.code === 'Ok' && data.routes.length > 0) {
-      const route = data.routes[0];
-      return route.legs.map(leg => {
-        const pts = [];
-        leg.steps.forEach((step, si) => {
-          const sc = step.geometry.coordinates.map(c => [c[1], c[0]]);
-          if (si === 0) pts.push(...sc);
-          else pts.push(...sc.slice(1));
-        });
-        return { coords: pts, duration: leg.duration, distance: leg.distance };
-      });
-    }
-  } catch (e) {
-    console.warn('OSRM fallback:', e);
-  }
-
-  const legs = [];
-  for (let i = 0; i < waypoints.length - 1; i++) {
-    legs.push({
-      coords: [[waypoints[i].lat, waypoints[i].lng], [waypoints[i + 1].lat, waypoints[i + 1].lng]],
-      duration: 0, distance: 0,
-    });
-  }
-  return legs;
+function getCachedRoute(dayIndex) {
+  return CACHED_ROUTES[dayIndex].map(leg => ({
+    coords: leg.c,
+    duration: leg.d,
+    distance: leg.k,
+  }));
 }
 
 // ════════════════════════════════════════
@@ -1002,19 +978,13 @@ async function init() {
   buildTabs();
   updateInfoCard(-1);
 
-  const waypointSets = DAYS.map(day => {
-    const pts = day.stops.map(s => ({ lat: s.lat, lng: s.lng }));
-    if (day.departFrom) pts.unshift(day.departFrom);
-    return pts;
-  });
-
   const nameSets = DAYS.map(day => {
     const names = day.stops.map(s => s.name);
     if (day.departFrom) names.unshift(day.departName);
     return names;
   });
 
-  const allLegs = await Promise.all(waypointSets.map(fetchDayRoute));
+  const allLegs = DAYS.map((_, i) => getCachedRoute(i));
 
   allLegs.forEach(legs => {
     legs.forEach(leg => {
